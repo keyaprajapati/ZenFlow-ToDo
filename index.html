@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZenFlow Task Manager</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                        },
+                        slate: {
+                            950: '#030712'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 transition-colors duration-200 antialiased h-screen w-screen overflow-hidden">
+
+    <!-- App Shell Layout -->
+    <div class="flex h-screen w-screen overflow-hidden">
+        
+        <!-- SIDEBAR (DESKTOP) -->
+        <aside class="hidden lg:flex flex-col w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800/80 flex-shrink-0 h-full">
+            <!-- Brand Logo -->
+            <div class="h-16 flex items-center px-6 border-b border-slate-200 dark:border-slate-800/80 gap-3">
+                <div class="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center text-white font-bold text-lg shadow-md shadow-brand-500/20">
+                    Z
+                </div>
+                <div>
+                    <span class="font-bold text-slate-900 dark:text-white tracking-tight">ZenFlow</span>
+                    <span class="text-[10px] block text-brand-500 font-semibold tracking-wider uppercase -mt-1">WORKSPACE</span>
+                </div>
+            </div>
+
+            <!-- Sidebar Navigation Content -->
+            <div class="flex-1 overflow-y-auto px-4 py-6 space-y-7">
+                <!-- Navigation -->
+                <div class="space-y-1">
+                    <p class="px-3 text-[11px] font-bold tracking-wider text-slate-400 dark:text-slate-500 uppercase mb-2">Workspace</p>
+                    <button onclick="setFilterCategory('All')" class="sidebar-category-btn w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors bg-brand-50 text-brand-600 dark:bg-slate-800/50 dark:text-brand-400" data-category="All">
+                        <span class="flex items-center gap-2.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7"></path></svg>
+                            All Tasks
+                        </span>
+                        <span id="all-count-badge" class="px-2 py-0.5 text-xs bg-brand-100 dark:bg-slate-700 dark:text-slate-300 rounded-full font-semibold">0</span>
+                    </button>
+                    <button onclick="setFilterCategory('Today')" class="sidebar-category-btn w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/40" data-category="Today">
+                        <span class="flex items-center gap-2.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z"></path></svg>
+                            Today Focus
+                        </span>
+                        <span id="today-count-badge" class="px-2 py-0.5 text-xs bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-full font-semibold">0</span>
+                    </button>
+                    <button onclick="setFilterCategory('Upcoming')" class="sidebar-category-btn w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/40" data-category="Upcoming">
+                        <span class="flex items-center gap-2.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            Upcoming
+                        </span>
+                        <span id="upcoming-count-badge" class="px-2 py-0.5 text-xs bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-full font-semibold">0</span>
+                    </button>
+                </div>
+
+                <!-- Folders / Folders list -->
+                <div class="space-y-1">
+                    <p class="px-3 text-[11px] font-bold tracking-wider text-slate-400 dark:text-slate-500 uppercase mb-2">Folders</p>
+                    <div id="folder-list-container" class="space-y-1"></div>
+                </div>
+            </div>
+
+            <!-- Sidebar Footer Settings -->
+            <div class="p-4 border-t border-slate-200 dark:border-slate-800/80 space-y-2">
+                <button onclick="toggleDarkMode()" class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/40 transition-colors">
+                    <span class="flex items-center gap-2.5">
+                        <span class="dark:hidden flex items-center gap-2.5">
+                            <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"></path></svg>
+                            Dark Mode
+                        </span>
+                        <span class="hidden dark:flex items-center gap-2.5">
+                            <svg class="w-4 h-4 text-yellow-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z"></path></svg>
+                            Light Mode
+                        </span>
+                    </span>
+                    <span class="w-2 h-2 rounded-full bg-brand-500"></span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- MOBILE SLIDE-OUT DRAWER OVERLAY -->
+        <div id="mobile-sidebar" class="fixed inset-0 z-50 hidden transition-opacity duration-300">
+            <div class="absolute inset-0 bg-slate-950/70 backdrop-blur-sm" onclick="toggleMobileSidebar(false)"></div>
+            <aside class="absolute top-0 left-0 bottom-0 w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col shadow-2xl transition-transform duration-300 transform -translate-x-full" id="mobile-sidebar-drawer">
+                <div class="h-16 flex items-center justify-between px-6 border-b border-slate-200 dark:border-slate-800/80">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center text-white font-bold text-lg">
+                            Z
+                        </div>
+                        <div>
+                            <span class="font-bold text-slate-900 dark:text-white">ZenFlow</span>
+                            <span class="text-[9px] block text-brand-500 font-semibold tracking-wider uppercase -mt-1">WORKSPACE</span>
+                        </div>
+                    </div>
+                    <button onclick="toggleMobileSidebar(false)" class="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+
+                <div class="flex-1 overflow-y-auto px-4 py-6 space-y-6">
+                    <div class="space-y-1">
+                        <p class="px-3 text-[11px] font-bold tracking-wider text-slate-400 dark:text-slate-500 uppercase mb-2">Workspace</p>
+                        <button onclick="setFilterCategory('All'); toggleMobileSidebar(false);" class="mobile-sidebar-category-btn w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium bg-brand-50 text-brand-600 dark:bg-slate-800/50 dark:text-brand-400" data-category="All">
+                            <span class="flex items-center gap-2.5">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7"></path></svg>
+                                All Tasks
+                            </span>
+                            <span id="mobile-all-count-badge" class="px-2 py-0.5 text-xs bg-brand-100 dark:bg-slate-700 dark:text-slate-300 rounded-full font-semibold">0</span>
+                        </button>
+                        <button onclick="setFilterCategory('Today'); toggleMobileSidebar(false);" class="mobile-sidebar-category-btn w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-400" data-category="Today">
+                            <span class="flex items-center gap-2.5">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z"></path></svg>
+                                Today Focus
+                            </span>
+                            <span id="mobile-today-count-badge" class="px-2 py-0.5 text-xs bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-full font-semibold">0</span>
+                        </button>
+                        <button onclick="setFilterCategory('Upcoming'); toggleMobileSidebar(false);" class="mobile-sidebar-category-btn w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-400" data-category="Upcoming">
+                            <span class="flex items-center gap-2.5">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                Upcoming
+                            </span>
+                            <span id="mobile-upcoming-count-badge" class="px-2 py-0.5 text-xs bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-full font-semibold">0</span>
+                        </button>
+                    </div>
+
+                    <div class="space-y-1">
+                        <p class="px-3 text-[11px] font-bold tracking-wider text-slate-400 dark:text-slate-500 uppercase mb-2">Folders</p>
+                        <div id="mobile-folder-list-container" class="space-y-1"></div>
+                    </div>
+                </div>
+
+                <div class="p-4 border-t border-slate-200 dark:border-slate-800/80">
+                    <button onclick="toggleDarkMode(); toggleMobileSidebar(false);" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/40">
+                        <span class="flex items-center gap-2.5 dark:hidden">
+                            <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"></path></svg>
+                            Dark Theme
+                        </span>
+                        <span class="hidden dark:flex items-center gap-2.5">
+                            <svg class="w-4 h-4 text-yellow-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z"></path></svg>
+                            Light Theme
+                        </span>
+                        <span class="w-2.5 h-2.5 rounded-full bg-brand-500"></span>
+                    </button>
+                </div>
+            </aside>
+        </div>
+
+        <div class="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-slate-50 dark:bg-slate-950">
+            <header class="h-16 border-b border-slate-200 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/40 backdrop-blur-md flex items-center justify-between px-4 sm:px-6 flex-shrink-0 z-10">
+                <div class="flex items-center gap-3">
+                    <button onclick="toggleMobileSidebar(true)" class="lg:hidden p-2 -ml-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-300">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                    </button>
+                    <div>
+                        <span id="current-date-display" class="text-[10px] sm:text-xs font-bold tracking-wider text-brand-500 uppercase block">Sunday, Jun 14</span>
+                        <h1 id="current-view-title" class="text-base sm:text-xl font-bold text-slate-900 dark:text-white truncate">Today's Focus</h1>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 sm:gap-4">
+                    <div class="relative hidden sm:block w-48 md:w-64">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </span>
+                        <input type="text" id="global-search-input" oninput="handleSearch(this.value)" placeholder="Search tasks..." class="w-full pl-9 pr-4 py-2 bg-slate-100 dark:bg-slate-900/60 text-xs rounded-lg border-0 focus:ring-1 focus:ring-brand-500 dark:text-slate-200 placeholder-slate-400 transition-all">
+                    </div>
+                    <button onclick="openCreateModal()" class="flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white text-xs sm:text-sm font-semibold rounded-lg shadow-md shadow-brand-500/20 transition-all">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
+                        <span class="hidden xs:inline">New Task</span>
+                        <span class="xs:hidden">Add</span>
+                    </button>
+                </div>
+            </header>
+
+            <main class="flex-1 overflow-y-auto px-4 sm:px-6 py-6 space-y-6">
+                <section class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 flex-shrink-0">
+                    <div class="bg-white dark:bg-slate-900 p-3 sm:p-4 rounded-xl border border-slate-200 dark:border-slate-800/80 flex items-center justify-between shadow-sm min-w-0">
+                        <div class="min-w-0 pr-2">
+                            <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase block truncate">Task Progress</span>
+                            <div class="flex items-baseline gap-1 mt-1">
+                                <span id="stats-percentage-text" class="text-lg sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">0%</span>
+                            </div>
+                            <span id="stats-fraction-text" class="text-[10px] sm:text-xs text-slate-500 block truncate">0 of 0 active</span>
+                        </div>
+                        <div class="relative w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
+                            <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                                <path class="text-slate-100 dark:text-slate-800" stroke-width="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                <path id="stats-progress-ring" class="text-brand-500 transition-all duration-500 ease-out" stroke-dasharray="0, 100" stroke-width="3.2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            </svg>
+                            <span class="absolute inset-0 flex items-center justify-center text-[9px] sm:text-[10px] font-extrabold text-brand-500">%</span>
+                        </div>
+                    </div>
+                    <div class="bg-white dark:bg-slate-900 p-3 sm:p-4 rounded-xl border border-slate-200 dark:border-slate-800/80 flex items-center justify-between shadow-sm min-w-0">
+                        <div class="min-w-0">
+                            <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase block truncate">High Priority</span>
+                            <div class="flex items-baseline gap-1 mt-1">
+                                <span id="stats-high-priority-count" class="text-lg sm:text-2xl font-bold tracking-tight text-rose-500">0</span>
+                                <span class="text-[10px] sm:text-xs text-slate-400 dark:text-slate-500 font-medium">active</span>
+                            </div>
+                            <div class="w-16 sm:w-24 bg-slate-100 dark:bg-slate-800 h-1 rounded-full mt-2 overflow-hidden">
+                                <div id="stats-high-bar" class="bg-rose-500 h-full rounded-full transition-all duration-300" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-rose-500/10 flex items-center justify-center text-rose-500 flex-shrink-0">
+                            <svg class="w-4 h-4 sm:w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        </div>
+                    </div>
+                    <div class="bg-white dark:bg-slate-900 p-3 sm:p-4 rounded-xl border border-slate-200 dark:border-slate-800/80 flex items-center justify-between shadow-sm min-w-0">
+                        <div class="min-w-0">
+                            <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase block truncate">Impending Deadlines</span>
+                            <div class="flex items-baseline gap-1 mt-1">
+                                <span id="stats-urgent-deadlines-count" class="text-lg sm:text-2xl font-bold tracking-tight text-amber-500">0</span>
+                                <span class="text-[10px] sm:text-xs text-slate-400 dark:text-slate-500 font-medium">due within 3d</span>
+                            </div>
+                            <span id="stats-urgent-text" class="text-[10px] sm:text-xs text-slate-500 block truncate">0 overdue</span>
+                        </div>
+                        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-500 flex-shrink-0">
+                            <svg class="w-4 h-4 sm:w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                    </div>
+                    <div class="bg-white dark:bg-slate-900 p-3 sm:p-4 rounded-xl border border-slate-200 dark:border-slate-800/80 flex items-center justify-between shadow-sm min-w-0">
+                        <div class="min-w-0">
+                            <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase block truncate">Productivity</span>
+                            <div class="flex items-baseline gap-1 mt-1">
+                                <span id="stats-productivity-grade" class="text-sm sm:text-lg font-bold tracking-tight text-emerald-500">Master Flow</span>
+                            </div>
+                            <span class="text-[10px] sm:text-xs text-slate-500 block truncate">Keeping focus daily</span>
+                        </div>
+                        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500 flex-shrink-0">
+                            <svg class="w-4 h-4 sm:w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                        </div>
+                    </div>
+                </section>
+                <section class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800/80 flex-shrink-0">
+                    <div class="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-950 rounded-lg self-start">
+                        <button onclick="setFilterStatus('All')" id="status-btn-All" class="px-3 py-1.5 rounded-md text-xs font-semibold transition-all shadow-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white">All</button>
+                        <button onclick="setFilterStatus('Active')" id="status-btn-Active" class="px-3 py-1.5 rounded-md text-xs font-semibold text-slate-500 hover:text-slate-950 dark:hover:text-slate-200 transition-all">Active</button>
+                        <button onclick="setFilterStatus('Completed')" id="status-btn-Completed" class="px-3 py-1.5 rounded-md text-xs font-semibold text-slate-500 hover:text-slate-950 dark:hover:text-slate-200 transition-all">Completed</button>
+                    </div>
+                    <div class="flex items-center gap-2 sm:gap-3 justify-between sm:justify-end min-w-0">
+                        <div class="relative sm:hidden flex-1 max-w-[180px]">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none">
+                                <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            </span>
+                            <input type="text" id="global-search-input-mobile" oninput="handleSearch(this.value)" placeholder="Search..." class="w-full pl-7 pr-3 py-1.5 bg-slate-100 dark:bg-slate-950 text-xs rounded-lg border-0 focus:ring-1 focus:ring-brand-500 dark:text-slate-200 placeholder-slate-400 transition-all">
+                        </div>
+                        <div class="flex items-center gap-1.5 flex-shrink-0">
+                            <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase hidden md:inline">Sort:</span>
+                            <select id="sort-selector" onchange="handleSortChange(this.value)" class="bg-slate-100 dark:bg-slate-950 border-0 text-xs font-semibold rounded-lg px-2.5 py-1.5 focus:ring-1 focus:ring-brand-500 focus:outline-none text-slate-700 dark:text-slate-300">
+                                <option value="dueDate">Due Date</option>
+                                <option value="priority">Priority</option>
+                                <option value="alphabetical">Alphabetical</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center p-0.5 bg-slate-100 dark:bg-slate-950 rounded-lg flex-shrink-0">
+                            <button onclick="setViewMode('List')" id="view-mode-List" class="p-1 px-2.5 rounded-md text-xs font-semibold transition-all flex items-center gap-1 bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                                <span class="hidden sm:inline">List</span>
+                            </button>
+                            <button onclick="setViewMode('Board')" id="view-mode-Board" class="p-1 px-2.5 rounded-md text-xs font-semibold transition-all flex items-center gap-1 text-slate-500 hover:text-slate-900 dark:hover:text-slate-200">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"></path></svg>
+                                <span class="hidden sm:inline">Board</span>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="relative min-h-[300px]">
+                    <div id="tasks-empty-state" class="hidden flex-col items-center justify-center py-16 text-center">
+                        <div class="w-16 h-16 bg-slate-100 dark:bg-slate-900 rounded-full flex items-center justify-center text-slate-400 mb-4 border border-slate-200 dark:border-slate-800">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                        </div>
+                        <h3 class="font-bold text-slate-700 dark:text-slate-300">All caught up!</h3>
+                        <p class="text-xs text-slate-400 dark:text-slate-500 mt-1 max-w-xs">No tasks matched your dynamic filters. Click "New Task" to create a productive schedule.</p>
+                    </div>
+                    <div id="list-view-container" class="space-y-3"></div>
+                    <div id="board-view-container" class="hidden grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+                        <div class="bg-slate-100/50 dark:bg-slate-900/40 p-4 rounded-xl border border-slate-200 dark:border-slate-900 flex flex-col max-h-[70vh]">
+                            <div class="flex items-center justify-between mb-4 flex-shrink-0">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
+                                    <h4 class="font-bold text-sm text-slate-700 dark:text-slate-300">Low Priority</h4>
+                                </div>
+                                <span id="board-count-low" class="px-2 py-0.5 text-[10px] bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-full font-bold">0</span>
+                            </div>
+                            <div id="board-column-low" class="space-y-3 overflow-y-auto pr-1 flex-1 min-h-[150px]"></div>
+                        </div>
+                        <div class="bg-slate-100/50 dark:bg-slate-900/40 p-4 rounded-xl border border-slate-200 dark:border-slate-900 flex flex-col max-h-[70vh]">
+                            <div class="flex items-center justify-between mb-4 flex-shrink-0">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                                    <h4 class="font-bold text-sm text-slate-700 dark:text-slate-300">Medium Priority</h4>
+                                </div>
+                                <span id="board-count-medium" class="px-2 py-0.5 text-[10px] bg-amber-100 dark:bg-amber-950/40 text-amber-600 rounded-full font-bold">0</span>
+                            </div>
+                            <div id="board-column-medium" class="space-y-3 overflow-y-auto pr-1 flex-1 min-h-[150px]"></div>
+                        </div>
+                        <div class="bg-slate-100/50 dark:bg-slate-900/40 p-4 rounded-xl border border-slate-200 dark:border-slate-900 flex flex-col max-h-[70vh]">
+                            <div class="flex items-center justify-between mb-4 flex-shrink-0">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                                    <h4 class="font-bold text-sm text-slate-700 dark:text-slate-300">High Priority</h4>
+                                </div>
+                                <span id="board-count-high" class="px-2 py-0.5 text-[10px] bg-rose-100 dark:bg-rose-950/40 text-rose-500 rounded-full font-bold">0</span>
+                            </div>
+                            <div id="board-column-high" class="space-y-3 overflow-y-auto pr-1 flex-1 min-h-[150px]"></div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <div id="task-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm hidden">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 w-full max-w-lg flex flex-col max-h-[85vh] shadow-2xl overflow-hidden scale-95 opacity-0 transition-all duration-300" id="task-modal-card">
+            <div class="p-5 border-b border-slate-200 dark:border-slate-800/80 flex items-center justify-between flex-shrink-0 bg-slate-50 dark:bg-slate-900/50">
+                <div>
+                    <h3 id="modal-title" class="font-bold text-slate-950 dark:text-white text-base">Add New Task</h3>
+                    <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">Streamline your active tasks & goals</p>
+                </div>
+                <button onclick="closeTaskModal()" class="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <form id="task-form" onsubmit="handleFormSubmit(event)" class="p-5 overflow-y-auto space-y-4 flex-1">
+                <input type="hidden" id="task-id">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase mb-1.5">Task Title *</label>
+                        <input type="text" id="task-title-field" required placeholder="e.g. Analyze Performance metrics" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-white placeholder-slate-400">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase mb-1.5">Folder / Category</label>
+                        <div class="flex gap-1.5">
+                            <select id="task-folder-field" class="flex-1 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-white">
+                            </select>
+                            <button type="button" onclick="promptCreateNewFolder()" title="Add Custom Folder" class="px-2.5 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex items-center justify-center">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase mb-1.5">Description</label>
+                    <textarea id="task-desc-field" rows="3" placeholder="Brief outline of deliverables and notes..." class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-white placeholder-slate-400"></textarea>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase mb-1.5">Priority Level</label>
+                        <select id="task-priority-field" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-white">
+                            <option value="LOW">Low Priority</option>
+                            <option value="MEDIUM" selected>Medium Priority</option>
+                            <option value="HIGH">High Priority</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase mb-1.5">Due Date *</label>
+                        <input type="date" id="task-date-field" required class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-white">
+                    </div>
+                </div>
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="block text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase">Checklist & Subtasks</label>
+                        <button type="button" onclick="addSubtaskField('')" class="text-xs text-brand-500 hover:text-brand-600 font-bold flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
+                            Add Subtask
+                        </button>
+                    </div>
+                    <div id="subtask-builder-list" class="space-y-2 max-h-40 overflow-y-auto pr-1"></div>
+                    <p id="subtask-builder-empty" class="text-[11px] text-slate-400 dark:text-slate-500 italic mt-1">No checklist items added yet.</p>
+                </div>
+            </form>
+            <div class="p-5 border-t border-slate-200 dark:border-slate-800/80 flex items-center justify-between flex-shrink-0 bg-slate-50 dark:bg-slate-900/50">
+                <div>
+                    <button type="button" id="modal-delete-btn" onclick="triggerModalDelete()" class="hidden px-3 py-2 bg-rose-500/10 hover:bg-rose-500 hover:text-white text-rose-500 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        Delete Task
+                    </button>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button type="button" onclick="closeTaskModal()" class="px-4 py-2 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 text-sm font-semibold rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">Cancel</button>
+                    <button type="submit" form="task-form" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold rounded-lg shadow-md shadow-brand-500/15 transition-all">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="folder-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm hidden">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 w-full max-w-sm p-6 shadow-2xl scale-95 opacity-0 transition-all duration-300" id="folder-modal-card">
+            <h3 class="font-bold text-slate-950 dark:text-white text-base">Create Folder</h3>
+            <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">Group your tasks in a tailored category</p>
+            <div class="mt-4">
+                <input type="text" id="new-folder-input" placeholder="e.g. FITNESS, HEALTH, STUDIES" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2.5 text-sm uppercase focus:outline-none focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-white placeholder-slate-400">
+            </div>
+            <div class="mt-6 flex justify-end gap-3">
+                <button onclick="closeFolderModal()" class="px-4 py-2 text-slate-500 dark:text-slate-400 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">Cancel</button>
+                <button onclick="saveNewFolder()" class="px-4 py-2 bg-brand-500 text-white text-xs font-bold rounded-lg hover:bg-brand-600">Add Folder</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirm-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm hidden">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 w-full max-w-sm p-6 shadow-2xl scale-95 opacity-0 transition-all duration-300" id="confirm-modal-card">
+            <div class="w-12 h-12 rounded-full bg-rose-500/10 flex items-center justify-center text-rose-500 mb-4">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+            </div>
+            <h3 class="font-bold text-slate-950 dark:text-white text-base">Delete Task</h3>
+            <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">Are you sure you want to delete this task permanently? This action cannot be undone.</p>
+            <div class="mt-6 flex justify-end gap-3">
+                <button onclick="closeConfirmModal()" class="px-4 py-2 text-slate-500 dark:text-slate-400 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">Cancel</button>
+                <button id="confirm-delete-btn" class="px-4 py-2 bg-rose-500 text-white text-xs font-bold rounded-lg hover:bg-rose-600">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container" class="fixed bottom-4 right-4 z-[999] flex flex-col gap-2 pointer-events-none"></div>
+
+    <script src="app.js" defer></script>
+</body>
+</html>
